@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 project(LEDString_Server)
 
-add_executable(Lights
-    Lights.cpp
+add_executable(ControlLights
+    ControlLights.cpp
 )
 
 find_package(MAVSDK REQUIRED)
@@ -18,13 +18,13 @@ target_include_directories(Lights PUBLIC
     /usr/local/include/mavsdk/plugins/mavlink_passthrough/include/
 )
 
-target_link_libraries(Lights
+target_link_libraries(ControlLights
     MAVSDK::mavsdk
     ws2811
 )
 
 if(NOT MSVC)
-    add_compile_options(Lights PRIVATE -Wall -Wextra)
+    add_compile_options(ControlLights PRIVATE -Wall -Wextra)
 else()
-    add_compile_options(Lights PRIVATE -WX -W2)
+    add_compile_options(ControlLights PRIVATE -WX -W2)
 endif()
