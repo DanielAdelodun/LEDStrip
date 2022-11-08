@@ -59,6 +59,8 @@ ws2811_led_t ArrayOfColours[] =
 };
 
 static bool followingFlightMode;
+LED_FILL_MODE led_fill_mode;
+uint32_t *leds;
 
 
 // Setup Signal Catchers. Set running = 0 on SIGINT/SIGTERM
@@ -296,11 +298,9 @@ void subscribe_flight_mode(Telemetry& telemetry){
 }
 
 void subscribe_led_string_config(MavlinkPassthrough& mavlink_passthrough, Telemetry& telemetry){
-	LED_FILL_MODE led_fill_mode;
     mavlink_passthrough.subscribe_message_async(
 		60200,
         [&telemetry](const mavlink_message_t& msg) {
-			uint32_t *leds;
 
 			LED_FILL_MODE led_fill_mode = static_cast<LED_FILL_MODE>(mavlink_msg_led_strip_config_get_fill_mode(&msg));
 			if (led_fill_mode == LED_FILL_MODE::LED_FILL_MODE_FOLLOW_FLIGHT_MODE)
