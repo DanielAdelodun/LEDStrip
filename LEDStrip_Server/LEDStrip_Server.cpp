@@ -269,20 +269,13 @@ inline void killLights() {
 		ws2811_fini(&DroneLights);
 }
 
-
-void subscribe_led_string_set(MavlinkPassthrough& mavlink_passthrough){
-	uint32_t *leds;
-    mavlink_passthrough.subscribe_message_async(
-		60200,
-        [leds](const mavlink_message_t& msg) { 
-			mavlink_msg_led_strip_set_get_colors(&msg, leds);
-            std::cout <<  "LED Colour: " << std::hex << leds[0] << '\n'; 
-			// std::cout << "Heartbeat Autopilot: " << (int)mavlink_msg_heartbeat_get_autopilot(&msg) << '\n';
-        }
-    );
+void unsubscribe_flight_mode(Telemetry& telemetry){
+	std::cout << "LEDs NOT Following Flight Mode" << std::endl;
+    telemetry.subscribe_flight_mode(nullptr);
 }
 
 void subscribe_flight_mode(Telemetry& telemetry){
+	std::cout << "LEDs Following Flight Mode" << std::endl;
     telemetry.subscribe_flight_mode([](Telemetry::FlightMode flight_mode) {
 		auto Colour = FlightMode2Colour[flight_mode];
 
@@ -296,8 +289,32 @@ void subscribe_flight_mode(Telemetry& telemetry){
     });
 }
 
-void unsubscribe_flight_mode(Telemetry& telemetry){
-    telemetry.subscribe_flight_mode(nullptr);
+void subscribe_led_string_set(MavlinkPassthrough& mavlink_passthrough, Telemetry& telemetry){
+	uint32_t *leds;
+	LED_FILL_MODE led_fill_mode;
+    mavlink_passthrough.subscribe_message_async(
+		60200,
+        [leds, &telemetry](const mavlink_message_t& msg) { 
+
+			LED_FILL_MODE led_fill_mode = static_cast<LED_FILL_MODE>(mavlink_msg_led_strip_set_get_fill_mode(&msg));
+			if (led_fill_mode == LED_FILL_MODE::LED_FOLLOW_FLIGHT_MODE)
+			{
+				subscribe_flight_mode(telemetry);
+				return;
+			}
+
+			unsubscribe_flight_mode(telemetry);
+			mavlink_msg_led_strip_set_get_colors(&msg, leds);
+			fillArms(leds[0]);
+			if ((DroneLightStatus = ws2811_render(&DroneLights)) != WS2811_SUCCESS)
+			{
+				std::cerr << "ws2811_render failed: " 
+						<< ws2811_get_return_t_str(DroneLightStatus) << '\n';
+			}
+
+            std::cout <<  "LED Colour: " << std::hex << leds[0] << '\n'; 
+        }
+    );
 }
 
 std::shared_ptr<System> get_system(Mavsdk& mavsdk)
@@ -379,7 +396,7 @@ int main(int argc, char *argv[])
     auto telemetry = Telemetry{system};
 	auto mavlink_passthrough = MavlinkPassthrough{system};
 
-	subscribe_led_string_set(mavlink_passthrough);
+	subscribe_led_string_set(mavlink_passthrough, telemetry);
     subscribe_flight_mode(telemetry);
 
     while (running) {}
