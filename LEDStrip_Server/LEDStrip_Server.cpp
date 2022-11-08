@@ -59,7 +59,6 @@ ws2811_led_t ArrayOfColours[] =
 };
 
 static bool followingFlightMode;
-static bool needfollowingFlightMode;
 LED_FILL_MODE led_fill_mode;
 
 // Setup Signal Catchers. Set running = 0 on SIGINT/SIGTERM
