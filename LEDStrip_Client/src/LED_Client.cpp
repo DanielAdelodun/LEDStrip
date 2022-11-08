@@ -73,6 +73,11 @@ std::shared_ptr<System> getSystem(Mavsdk &mavsdk)
     return fut.get();
 }
 
+void setFollowFlightMode(mavlink_led_strip_config_t &LEDStripConfig)
+{
+    LEDStripConfig.fill_mode = LED_FILL_MODE_FOLLOW_FLIGHT_MODE;
+}
+
 void setLEDFillColour(uint32_t newColour, mavlink_led_strip_config_t &LEDStripConfig)
 {
     LEDStripConfig.colors[0] = newColour;
@@ -91,7 +96,10 @@ void sendLedStripConfig(MavlinkPassthrough &mavlink_passthrough, const mavlink_l
 
     mavlink_passthrough.send_message(message);
 
-    std::cout << "Attempted to send LEDStripConfig with colour: " << std::hex << LEDStripConfig.colors[0] << std::endl;
+    if (LEDStripConfig.fill_mode != LED_FILL_MODE_FOLLOW_FLIGHT_MODE)
+        std::cout << "Attempted to send LEDStripConfig with colour: " << std::hex << LEDStripConfig.colors[0] << std::endl;
+    else
+        std::cout << "Attempted to send follow flight mode" << std::endl;
 }
 
 static uint32_t cycleLEDColour(void)

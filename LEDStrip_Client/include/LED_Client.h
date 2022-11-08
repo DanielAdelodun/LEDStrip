@@ -24,6 +24,7 @@ extern uint32_t ArrayOfColours[];
 extern uint8_t NoOfColours;
 extern mavlink_led_strip_config_t LEDStripConfig;
 
+void setFollowFlightMode(mavlink_led_strip_config_t &);
 void setLEDFillColour(uint32_t, mavlink_led_strip_config_t &);
 void cycleLEDColour(mavsdk::MavlinkPassthrough &, const mavlink_led_strip_config_t &);
 void sendLedStripConfig(mavsdk::MavlinkPassthrough &, const mavlink_led_strip_config_t &);

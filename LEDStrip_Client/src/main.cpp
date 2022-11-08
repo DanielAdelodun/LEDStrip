@@ -479,10 +479,13 @@ int main(int argc, char** argv)
 
     ImVec4 ledColour = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
-    uint32_t Red;
-    uint32_t Green;
-    uint32_t Blue;
-    uint32_t newColour, oldColour;
+    static uint32_t Red;
+    static uint32_t Green;
+    static uint32_t Blue;
+    static uint32_t newColour; 
+    static uint32_t oldColour;
+    bool followFlightMode = true;
+    bool followFlightModeSent = false;
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -523,6 +526,7 @@ int main(int argc, char** argv)
             ImGui::Begin("StemStudios LEDClient", nullptr, flags);
 
             ImGui::ColorPicker3("LED Colour", (float*)&ledColour);
+            ImGui::SameLine; ImGui::Checkbox("Follow Flight Mode", &followFlightMode);
 
             ImGui::End();
         }
@@ -533,16 +537,31 @@ int main(int argc, char** argv)
         const bool is_minimized = (draw_data->DisplaySize.x <= 0.0f || draw_data->DisplaySize.y <= 0.0f);
         if (!is_minimized)
         {
-            Red   = ledColour.x * 255;
-            Blue  = ledColour.y * 255;
-            Green = ledColour.z * 255;
-
-            oldColour = newColour;
-            newColour = (Red << 16) + (Blue << 8) + (Green);
-            if (oldColour != newColour)
+            if (!followFlightMode)
             {
-                setLEDFillColour(newColour, LEDStripConfig);
-                sendLedStripConfig(mavlink_passthrough, LEDStripConfig);
+                Red   = ledColour.x * 255;
+                Blue  = ledColour.y * 255;
+                Green = ledColour.z * 255;
+
+                oldColour = newColour;
+                newColour = (Red << 16) + (Blue << 8) + (Green);
+                if (oldColour != newColour)
+                {
+                    setLEDFillColour(newColour, LEDStripConfig);
+                    sendLedStripConfig(mavlink_passthrough, LEDStripConfig);
+                    followFlightModeSent = false;
+                }
+            }
+
+            else
+            {
+                if (!followFlightModeSent)
+                {
+                    setFollowFlightMode(LEDStripConfig);
+                    sendLedStripConfig(mavlink_passthrough, LEDStripConfig);
+                    followFlightModeSent = true;
+                    newColour = 0xFF000000;
+                }
             }
 
             FrameRender(wd, draw_data);
