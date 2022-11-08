@@ -303,7 +303,7 @@ void subscribe_led_string_config(MavlinkPassthrough& mavlink_passthrough, Teleme
 			uint32_t *leds;
 
 			LED_FILL_MODE led_fill_mode = static_cast<LED_FILL_MODE>(mavlink_msg_led_strip_config_get_fill_mode(&msg));
-			if (led_fill_mode == LED_FILL_MODE::LED_FOLLOW_FLIGHT_MODE)
+			if (led_fill_mode == LED_FILL_MODE::LED_FILL_MODE_FOLLOW_FLIGHT_MODE)
 			{
 				if (!followingFlightMode)
 					subscribe_flight_mode(telemetry);
