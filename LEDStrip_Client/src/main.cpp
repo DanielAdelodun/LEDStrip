@@ -482,7 +482,7 @@ int main(int argc, char** argv)
     uint32_t Red;
     uint32_t Green;
     uint32_t Blue;
-    uint32_t newColour;
+    uint32_t newColour, oldColour;
 
     // Main loop
     while (!glfwWindowShouldClose(window))
@@ -537,9 +537,13 @@ int main(int argc, char** argv)
             Blue  = ledColour.y * 255;
             Green = ledColour.z * 255;
 
+            oldColour = newColour;
             newColour = (Red << 16) + (Blue << 8) + (Green);
-            setLEDFillColour(newColour, LEDStripConfig);
-            sendLedStripConfig(mavlink_passthrough, LEDStripConfig);
+            if (oldColour != newColour)
+            {
+                setLEDFillColour(newColour, LEDStripConfig);
+                sendLedStripConfig(mavlink_passthrough, LEDStripConfig);
+            }
 
             FrameRender(wd, draw_data);
             FramePresent(wd);
