@@ -59,6 +59,7 @@ ws2811_led_t ArrayOfColours[] =
 };
 
 static bool followingFlightMode;
+static bool needfollowingFlightMode;
 LED_FILL_MODE led_fill_mode;
 
 // Setup Signal Catchers. Set running = 0 on SIGINT/SIGTERM
@@ -271,26 +272,18 @@ inline void killLights() {
 		ws2811_fini(&DroneLights);
 }
 
-void unsubscribe_flight_mode(Telemetry& telemetry){
-	std::cout << "LEDs NOT Following Flight Mode" << std::endl;
-	followingFlightMode = false;
-    telemetry.subscribe_flight_mode(nullptr);
-}
-
 void subscribe_flight_mode(Telemetry& telemetry){
-	std::cout << "LEDs Following Flight Mode" << std::endl;
 	followingFlightMode = true;
-	
     telemetry.subscribe_flight_mode([](Telemetry::FlightMode flight_mode) {
-		auto Colour = FlightMode2Colour[flight_mode];
-
-		fillArms(Colour);
-        if ((DroneLightStatus = ws2811_render(&DroneLights)) != WS2811_SUCCESS)
-        {
-			std::cerr << "ws2811_render failed: " 
-			          << ws2811_get_return_t_str(DroneLightStatus) << '\n';
-        }
-
+		if (followingFlightMode) {
+			auto Colour = FlightMode2Colour[flight_mode];
+			fillArms(Colour);
+			if ((DroneLightStatus = ws2811_render(&DroneLights)) != WS2811_SUCCESS)
+			{
+				std::cerr << "ws2811_render failed: " 
+						<< ws2811_get_return_t_str(DroneLightStatus) << '\n';
+			}
+		}
     });
 }
 
@@ -303,14 +296,11 @@ void subscribe_led_string_config(MavlinkPassthrough& mavlink_passthrough, Teleme
 			LED_FILL_MODE led_fill_mode = static_cast<LED_FILL_MODE>(mavlink_msg_led_strip_config_get_fill_mode(&msg));
 			if (led_fill_mode == LED_FILL_MODE::LED_FILL_MODE_FOLLOW_FLIGHT_MODE)
 			{
-				if (!followingFlightMode)
-					subscribe_flight_mode(telemetry);
-
+				followingFlightMode = true;
 				return;
 			}
 
-			if (followingFlightMode)
-				unsubscribe_flight_mode(telemetry);
+			followingFlightMode = false;
 
 			mavlink_msg_led_strip_config_get_colors(&msg, leds);
 			fillArms(leds[0]);
@@ -319,8 +309,6 @@ void subscribe_led_string_config(MavlinkPassthrough& mavlink_passthrough, Teleme
 				std::cerr << "ws2811_render failed: " 
 						<< ws2811_get_return_t_str(DroneLightStatus) << '\n';
 			}
-
-            std::cout <<  "LED Colour: " << std::hex << leds[0] << '\n'; 
         }
     );
 }
@@ -407,7 +395,7 @@ int main(int argc, char *argv[])
     subscribe_flight_mode(telemetry);
 	subscribe_led_string_config(mavlink_passthrough, telemetry);
 
-    while (running) {}
+    while (running) { }
 
     if (clearOnExit) {
 	clearArms();
