@@ -1,0 +1,6 @@
+[submodule "LEDStrip_Client/third-party/glfw"]
+	path = LEDStrip_Client/third-party/glfw
+	url = https://github.com/glfw/glfw/
+[submodule "LEDStrip_Client/third-party/imgui"]
+	path = LEDStrip_Client/third-party/imgui
+	url = https://github.com/ocornut/imgui/
