@@ -538,8 +538,8 @@ int main(int argc, char** argv)
             Green = ledColour.z * 255;
 
             newColour = (Red << 16) + (Blue << 8) + (Green);
-            setLEDFillColour(newColour, LEDStripSet);
-            sendLedStringSet(mavlink_passthrough, LEDStripSet);
+            setLEDFillColour(newColour, LEDStripConfig);
+            sendLedStripConfig(mavlink_passthrough, LEDStripConfig);
 
             FrameRender(wd, draw_data);
             FramePresent(wd);

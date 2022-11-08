@@ -39,6 +39,7 @@ file(GLOB sources src/*.cpp)
 add_executable(LEDStrip_Client ${sources} ${IMGUI_DIR}/backends/imgui_impl_glfw.cpp ${IMGUI_DIR}/backends/imgui_impl_vulkan.cpp ${IMGUI_DIR}/imgui.cpp ${IMGUI_DIR}/imgui_draw.cpp ${IMGUI_DIR}/imgui_demo.cpp ${IMGUI_DIR}/imgui_tables.cpp ${IMGUI_DIR}/imgui_widgets.cpp)
 target_include_directories(LEDStrip_Client PUBLIC
     "/usr/local/include/mavsdk/plugins/mavlink_passthrough/include/"
+    "/usr/local/include/mavsdk/"
     "/usr/local/include/"
     "/usr/include/"
     "include"

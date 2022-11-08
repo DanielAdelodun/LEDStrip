@@ -22,14 +22,14 @@ uint32_t ArrayOfColours[] =
 
 uint8_t NoOfColours = sizeof(ArrayOfColours) / sizeof(uint32_t);
 
-mavlink_led_strip_set_t LEDStripSet{
+mavlink_led_strip_config_t LEDStripConfig{
     .colors = {0, 0, 0, 0, 0, 0, 0, 0},
     .target_system = 1,
     .target_component = 134,
     .fill_mode = LED_FILL_MODE_ALL,
     .led_index = UINT8_MAX,
     .length = UINT8_MAX,
-    .strip_index = UINT8_MAX,
+    .strip_id = UINT8_MAX,
 };
 
 
@@ -73,25 +73,25 @@ std::shared_ptr<System> getSystem(Mavsdk &mavsdk)
     return fut.get();
 }
 
-void setLEDFillColour(uint32_t newColour, mavlink_led_strip_set_t &LEDStripSet)
+void setLEDFillColour(uint32_t newColour, mavlink_led_strip_config_t &LEDStripConfig)
 {
-    LEDStripSet.colors[0] = newColour;
-    LEDStripSet.fill_mode = LED_FILL_MODE_ALL;
+    LEDStripConfig.colors[0] = newColour;
+    LEDStripConfig.fill_mode = LED_FILL_MODE_ALL;
 }
 
-void sendLedStringSet(MavlinkPassthrough &mavlink_passthrough, const mavlink_led_strip_set_t &LEDStripSet)
+void sendLedStripConfig(MavlinkPassthrough &mavlink_passthrough, const mavlink_led_strip_config_t &LEDStripConfig)
 {
     mavlink_message_t message;
 
-    mavlink_msg_led_strip_set_encode(
+    mavlink_msg_led_strip_config_encode(
         mavlink_passthrough.get_our_sysid(),
         mavlink_passthrough.get_our_compid(),
         &message,
-        &LEDStripSet);
+        &LEDStripConfig);
 
     mavlink_passthrough.send_message(message);
 
-    std::cout << "Attempted to send LEDStripSet with colour: " << std::hex << LEDStripSet.colors[0] << std::endl;
+    std::cout << "Attempted to send LEDStripConfig with colour: " << std::hex << LEDStripConfig.colors[0] << std::endl;
 }
 
 static uint32_t cycleLEDColour(void)

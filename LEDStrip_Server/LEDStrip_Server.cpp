@@ -58,6 +58,8 @@ ws2811_led_t ArrayOfColours[] =
 	PURPLE,     PINK
 };
 
+static bool followingFlightMode;
+
 
 // Setup Signal Catchers. Set running = 0 on SIGINT/SIGTERM
 static uint8_t clearOnExit = 0;
@@ -271,11 +273,15 @@ inline void killLights() {
 
 void unsubscribe_flight_mode(Telemetry& telemetry){
 	std::cout << "LEDs NOT Following Flight Mode" << std::endl;
+	followingFlightMode = false;
+
     telemetry.subscribe_flight_mode(nullptr);
 }
 
 void subscribe_flight_mode(Telemetry& telemetry){
 	std::cout << "LEDs Following Flight Mode" << std::endl;
+	followingFlightMode = true;
+	
     telemetry.subscribe_flight_mode([](Telemetry::FlightMode flight_mode) {
 		auto Colour = FlightMode2Colour[flight_mode];
 
@@ -289,22 +295,26 @@ void subscribe_flight_mode(Telemetry& telemetry){
     });
 }
 
-void subscribe_led_string_set(MavlinkPassthrough& mavlink_passthrough, Telemetry& telemetry){
-	uint32_t *leds;
+void subscribe_led_string_config(MavlinkPassthrough& mavlink_passthrough, Telemetry& telemetry){
 	LED_FILL_MODE led_fill_mode;
     mavlink_passthrough.subscribe_message_async(
 		60200,
-        [leds, &telemetry](const mavlink_message_t& msg) { 
+        [&telemetry](const mavlink_message_t& msg) {
+			uint32_t *leds;
 
-			LED_FILL_MODE led_fill_mode = static_cast<LED_FILL_MODE>(mavlink_msg_led_strip_set_get_fill_mode(&msg));
+			LED_FILL_MODE led_fill_mode = static_cast<LED_FILL_MODE>(mavlink_msg_led_strip_config_get_fill_mode(&msg));
 			if (led_fill_mode == LED_FILL_MODE::LED_FOLLOW_FLIGHT_MODE)
 			{
-				subscribe_flight_mode(telemetry);
+				if (!followingFlightMode)
+					subscribe_flight_mode(telemetry);
+
 				return;
 			}
 
-			unsubscribe_flight_mode(telemetry);
-			mavlink_msg_led_strip_set_get_colors(&msg, leds);
+			if (followingFlightMode)
+				unsubscribe_flight_mode(telemetry);
+
+			mavlink_msg_led_strip_config_get_colors(&msg, leds);
 			fillArms(leds[0]);
 			if ((DroneLightStatus = ws2811_render(&DroneLights)) != WS2811_SUCCESS)
 			{
@@ -396,8 +406,8 @@ int main(int argc, char *argv[])
     auto telemetry = Telemetry{system};
 	auto mavlink_passthrough = MavlinkPassthrough{system};
 
-	subscribe_led_string_set(mavlink_passthrough, telemetry);
     subscribe_flight_mode(telemetry);
+	subscribe_led_string_config(mavlink_passthrough, telemetry);
 
     while (running) {}
 

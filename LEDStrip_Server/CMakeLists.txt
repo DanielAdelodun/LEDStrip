@@ -15,6 +15,7 @@ target_include_directories(LEDStrip_Server PUBLIC
     /usr/local/include/
     /usr/include/
     /usr/local/include/ws2811/
+    /usr/local/include/mavsdk/
     /usr/local/include/mavsdk/plugins/mavlink_passthrough/include/
 )
 
