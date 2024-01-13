@@ -27,51 +27,10 @@ mavlink_led_strip_config_t LEDStripConfig{
     .target_system = 1,
     .target_component = 134,
     .fill_mode = LED_FILL_MODE_ALL,
-    .led_index = UINT8_MAX,
-    .length = UINT8_MAX,
+    .led_index = 0,
+    .length = 8,
     .strip_id = UINT8_MAX,
 };
-
-
-std::shared_ptr<System> getSystem(Mavsdk &mavsdk)
-{
-    std::cout << "Waiting to discover system...\n";
-    auto prom = std::promise<std::shared_ptr<System>>{};
-    auto fut = prom.get_future();
-
-    mavsdk.subscribe_on_new_system([&mavsdk, &prom]()
-                                   {
-        auto system = mavsdk.systems().back();
-
-        if (system->has_autopilot()) {
-            std::cout << "Discovered autopilot\n";
-
-            mavsdk.subscribe_on_new_system(nullptr);
-            prom.set_value(system);
-        } });
-
-    if (fut.wait_for(std::chrono::seconds(3)) == std::future_status::timeout)
-    {
-        bool not_found = true;
-        mavsdk.subscribe_on_new_system(nullptr);
-
-        std::cerr << "No autopilot caught. Re-checking found systems once.\n";
-        for (auto system : mavsdk.systems())
-        {
-            if (system->has_autopilot())
-            {
-                std::cout << "Discovered autopilot\n";
-                prom.set_value(system);
-                not_found = false;
-                break;
-            }
-        }
-        if (not_found)
-            return 0;
-    }
-
-    return fut.get();
-}
 
 void setFollowFlightMode(mavlink_led_strip_config_t &LEDStripConfig)
 {
@@ -109,25 +68,4 @@ static uint32_t cycleLEDColour(void)
     ColourIndex %= NoOfColours;
     
     return ArrayOfColours[ColourIndex];
-}
-
-std::shared_ptr<mavsdk::System> configMavsdk(Mavsdk &mavsdk, const std::string &connection_url)
-{
-    mavsdk.set_configuration(Mavsdk::Configuration(1, 135, true));
-
-    ConnectionResult connection_result = mavsdk.add_any_connection(connection_url);
-
-    if (connection_result != ConnectionResult::Success)
-    {
-        std::cerr << "Connection failed: " << connection_result << '\n';
-        exit(1);
-    }
-
-    auto system = getSystem(mavsdk);
-    if (!system)
-    {
-        exit(1);
-    }
-
-    return system;
 }

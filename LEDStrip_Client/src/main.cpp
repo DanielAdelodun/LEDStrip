@@ -472,10 +472,22 @@ int main(int argc, char** argv)
         ImGui_ImplVulkan_DestroyFontUploadObjects();
     }
 
-    mavsdk::Mavsdk mavsdk;
-    auto system = configMavsdk(mavsdk, argv[1]);
+    mavsdk::Mavsdk mavsdk{mavsdk::Mavsdk::Configuration{mavsdk::Mavsdk::ComponentType::GroundStation}};
+    mavsdk.set_configuration(mavsdk::Mavsdk::Configuration(1, 135, true));
+    mavsdk::ConnectionResult connection_result = mavsdk.add_any_connection(argv[1]);
+
+    if (connection_result != mavsdk::ConnectionResult::Success) {
+        std::cerr << "Connection failed: " << connection_result << '\n';
+        return 1;
+    }
+
+    auto system = mavsdk.first_autopilot(3.0);
+    if (!system) {
+        std::cerr << "Timed out waiting for system\n";
+        return 1;
+    }
     
-    auto mavlink_passthrough = mavsdk::MavlinkPassthrough{system};
+    auto mavlink_passthrough = mavsdk::MavlinkPassthrough{system.value()};
 
     ImVec4 ledColour = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 

@@ -29,6 +29,3 @@ void setLEDFillColour(uint32_t, mavlink_led_strip_config_t &);
 void cycleLEDColour(mavsdk::MavlinkPassthrough &, const mavlink_led_strip_config_t &);
 void sendLedStripConfig(mavsdk::MavlinkPassthrough &, const mavlink_led_strip_config_t &);
 
-std::shared_ptr<mavsdk::System> configMavsdk(mavsdk::Mavsdk &, const std::string &);
-std::shared_ptr<mavsdk::System> getSystem(mavsdk::Mavsdk &);
-
